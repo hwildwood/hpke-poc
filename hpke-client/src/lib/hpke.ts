@@ -1,0 +1,57 @@
+import {AEAD_AES_128_GCM, CipherSuite, KDF_HKDF_SHA256, KEM_DHKEM_P256_HKDF_SHA256,} from 'hpke';
+
+import {API_BASE_URL, HPKE_INFO} from '../config';
+import {base64ToBytes, bytesToBase64} from './base64';
+
+type HpkePublicKeyResponse = {
+  kem: string;
+  kdf: string;
+  aead: string;
+  publicKeyBase64: string;
+};
+
+type HpkeRequestResponse = {
+  status: string;
+};
+
+const encoder = new TextEncoder();
+const suite = new CipherSuite(
+  KEM_DHKEM_P256_HKDF_SHA256,
+  KDF_HKDF_SHA256,
+  AEAD_AES_128_GCM,
+);
+const info = encoder.encode(HPKE_INFO);
+
+async function fetchRecipientPublicKey() {
+  const response = await fetch(`${API_BASE_URL}/hpke/public-key`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch public key (${response.status})`);
+  }
+
+  const body = (await response.json()) as HpkePublicKeyResponse;
+  return suite.DeserializePublicKey(base64ToBytes(body.publicKeyBase64));
+}
+
+export async function sendHpkeRequest(): Promise<HpkeRequestResponse> {
+  const recipientPublicKey = await fetchRecipientPublicKey();
+  const plaintext = encoder.encode(JSON.stringify({key: 'kkgtazllsxkwkdggspihbykuipbsebtjfopywttwppxpdnrgzqqdfgjduhxsmwfbimzyfyjluvjouqofcnwmctsdrgxdgfhtrlkmyenzmiirmleeyybaqpzhtkjlzsavicpyxmmshiknjigfdcoroipjdduccxtigdqorbmadhtiqbdecwwpegwtflusrotzltbxnupakxeuolpoajuvwtxpbsxqmbqnoxjinrgycftiofqyqjgcuiauronahrpqkbccwrcznrqmvhngmiachvqwogwwmxcchmeuhfjikqhfglfmkmruxkgjwrkqubxjtkuntsevelakwhrfsysoyhegsyxuwsfwdpqtylnwxfxmskivluprvtptgakoldcyvzieiuwuyjtxbybvjpoqtyswbzrunneuhxsqlmxphpeiwwijssuelfglnbysasrmmjbzdhsgijinrriveldgzrttzqoiafifosanghdelltnjnsgusscgciksipnlsqqlonlubolcbesbekujplhlsgzfnflucvylowgffihgsmffjjzxoorqhnwzubjvdkhjvdongbeevhgfkqefsihitgmlmshgclhjzruenvanjiyivuqeirlqfpdbzaamafzbqpqinijblqymjkqigzohgciziyuupixqfcwdjshurarmtmxoicgbyykbbbfwotrrvhkloqdasrgmcaxaihamwhfxkcqcaqciwxuchfhdotdixxiurcymqghpzaozeiyembjaorosntzkkcocsgvckfnrbdudlmysecuqnnsoujlolkvzjztmyyhkewtubhvyxkkuynkmxsxkkybchmpiifabweolynvpciynmykwnucmkkkxaifxsbwacvakplluewnshdidhfqgvragfmgllcxmuctubbfxsselohbmhwdrpxlwpwntoijmrwapzwvqnyquhggcvuwmcumzgvadfnqelaicsbkhilajwelszjkxhmwdnfcxsygrdhekkgtazllsxkwkdggspihbykuipbsebtjfopywttwppxpdnrgzqqdfgjduhxsmwfbimzyfyjluvjouqofcnwmctsdrgxdgfhtrlkmyenzmiirmleeyybaqpzhtkjlzsavicpyxmmshiknjigfdcoroipjdduccxtigdqorbmadhtiqbdecwwpegwtflusrotzltbxnupakxeuolpoajuvwtxpbsxqmbqnoxjinrgycftiofqyqjgcuiauronahrpqkbccwrcznrqmvhngmiachvqwogwwmxcchmeuhfjikqhfglfmkmruxkgjwrkqubxjtkuntsevelakwhrfsysoyhegsyxuwsfwdpqtylnwxfxmskivluprvtptgakoldcyvzieiuwuyjtxbybvjpoqtyswbzrunneuhxsqlmxphpeiwwijssuelfglnbysasrmmjbzdhsgijinrriveldgzrttzqoiafifosanghdelltnjnsgusscgciksipnlsqqlonlubolcbesbekujplhlsgzfnflucvylowgffihgsmffjjzxoorqhnwzubjvdkhjvdongbeevhgfkqefsihitgmlmshgclhjzruenvanjiyivuqeirlqfpdbzaamafzbqpqinijblqymjkqigzohgciziyuupixqfcwdjshurarmtmxoicgbyykbbbfwotrrvhkloqdasrgmcaxaihamwhfxkcqcaqciwxuchfhdotdixxiurcymqghpzaozeiyembjaorosntzkkcocsgvckfnrbdudlmysecuqnnsoujlolkvzjztmyyhkewtubhvyxkkuynkmxsxkkybchmpiifabweolynvpciynmykwnucmkkkxaifxsbwacvakplluewnshdidhfqgvragfmgllcxmuctubbfxsselohbmhwdrpxlwpwntoijmrwapzwvqnyquhggcvuwmcumzgvadfnqelaicsbkhilajwelszjkxhmwdnfcxsygrdhekkgtazllsxkwkdggspihbykuipbsebtjfopywttwppxpdnrgzqqdfgjduhxsmwfbimzyfyjluvjouqofcnwmctsdrgxdgfhtrlkmyenzmiirmleeyybaqpzhtkjlzsavicpyxmmshiknjigfdcoroipjdduccxtigdqorbmadhtiqbdecwwpegwtflusrotzltbxnupakxeuolpoajuvwtxpbsxqmbqnoxjinrgycftiofqyqjgcuiauronahrpqkbccwrcznrqmvhngmiachvqwogwwmxcchmeuhfjikqhfglfmkmruxkgjwrkqubxjtkuntsevelakwhrfsysoyhegsyxuwsfwdpqtylnwxfxmskivluprvtptgakoldcyvzieiuwuyjtxbybvjpoqtyswbzrunneuhxsqlmxphpeiwwijssuelfglnbysasrmmjbzdhsgijinrriveldgzrttzqoiafifosanghdelltnjnsgusscgciksipnlsqqlonlubolcbesbekujplhlsgzfnflucvylowgffihgsmffjjzxoorqhnwzubjvdkhjvdongbeevhgfkqefsihitgmlmshgclhjzruenvanjiyivuqeirlqfpdbzaamafzbqpqinijblqymjkqigzohgciziyuupixqfcwdjshurarmtmxoicgbyykbbbfwotrrvhkloqdasrgmcaxaihamwhfxkcqcaqciwxuchfhdotdixxiurcymqghpzaozeiyembjaorosntzkkcocsgvckfnrbdudlmysecuqnnsoujlolkvzjztmyyhkewtubhvyxkkuynkmxsxkkybchmpiifabweolynvpciynmykwnucmkkkxaifxsbwacvakplluewnshdidhfqgvragfmgllcxmuctubbfxsselohbmhwdrpxlwpwntoijmrwapzwvqnyquhggcvuwmcumzgvadfnqelaicsbkhilajwelszjkxhmwdnfcxsygrdhe'}));
+  const {encapsulatedSecret, ciphertext} = await suite.Seal(recipientPublicKey, plaintext, {info});
+
+  const response = await fetch(`${API_BASE_URL}/hpke/requests`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      encBase64: bytesToBase64(encapsulatedSecret),
+      ciphertextBase64: bytesToBase64(ciphertext),
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Backend rejected request (${response.status}): ${detail}`);
+  }
+
+  return (await response.json()) as HpkeRequestResponse;
+}
